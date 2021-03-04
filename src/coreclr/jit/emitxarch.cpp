@@ -44,6 +44,11 @@ bool IsFMAInstruction(instruction ins)
     return (ins >= INS_FIRST_FMA_INSTRUCTION) && (ins <= INS_LAST_FMA_INSTRUCTION);
 }
 
+bool IsAVXVNNIInstruction(instruction ins)
+{
+    return (ins >= INS_FIRST_AVXVNNI_INSTRUCTION) && (ins <= INS_LAST_AVXVNNI_INSTRUCTION);
+}
+
 bool IsBMIInstruction(instruction ins)
 {
     return (ins >= INS_FIRST_BMI_INSTRUCTION) && (ins <= INS_LAST_BMI_INSTRUCTION);
@@ -6142,7 +6147,7 @@ void emitter::emitIns_SIMD_R_R_S_I(
 void emitter::emitIns_SIMD_R_R_R_A(
     instruction ins, emitAttr attr, regNumber targetReg, regNumber op1Reg, regNumber op2Reg, GenTreeIndir* indir)
 {
-    assert(IsFMAInstruction(ins));
+    assert(IsFMAInstruction(ins) || IsAVXVNNIInstruction(ins));
     assert(UseVEXEncoding());
 
     if (op1Reg != targetReg)
@@ -6251,6 +6256,11 @@ void emitter::emitIns_SIMD_R_R_R_R(
 
         emitIns_R_R_R(ins, attr, targetReg, op2Reg, op3Reg);
     }
+    else if (IsAVXVNNIInstruction(ins))
+    {
+        assert(UseVEXEncoding());
+        emitIns_R_R_R(ins, attr, targetReg, op2Reg, op3Reg);
+    }
     else if (UseVEXEncoding())
     {
         assert(isAvxBlendv(ins) || isSse41Blendv(ins));
@@ -6312,7 +6322,7 @@ void emitter::emitIns_SIMD_R_R_R_R(
 void emitter::emitIns_SIMD_R_R_R_S(
     instruction ins, emitAttr attr, regNumber targetReg, regNumber op1Reg, regNumber op2Reg, int varx, int offs)
 {
-    assert(IsFMAInstruction(ins));
+    assert(IsFMAInstruction(ins) || IsAVXVNNIInstruction(ins));
     assert(UseVEXEncoding());
 
     if (op1Reg != targetReg)
@@ -15379,6 +15389,10 @@ emitter::insExecutionCharacteristics emitter::getInsExecutionCharacteristics(ins
         case INS_vfnmsub132ss:
         case INS_vfnmsub213ss:
         case INS_vfnmsub231ss:
+        case INS_vpdpbusd:  //will be populated when the HW becomes publicly available
+        case INS_vpdpwssd:  //will be populated when the HW becomes publicly available
+        case INS_vpdpbusds: //will be populated when the HW becomes publicly available
+        case INS_vpdpwssds: //will be populated when the HW becomes publicly available
             // uops.info
             result.insThroughput = PERFSCORE_THROUGHPUT_2X;
             result.insLatency += PERFSCORE_LATENCY_4C;
