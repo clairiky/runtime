@@ -181,8 +181,6 @@ if /i "%1" == "skipnative"          (set __BuildNative=0&set processedArgs=!proc
 if /i "%1" == "skipcrossarchnative" (set __SkipCrossArchNative=1&set processedArgs=!processedArgs! %1&shift&goto Arg_Loop)
 if /i "%1" == "skipgenerateversion" (set __SkipGenerateVersion=1&set processedArgs=!processedArgs! %1&shift&goto Arg_Loop)
 if /i "%1" == "skiprestoreoptdata"  (set __RestoreOptData=0&set processedArgs=!processedArgs! %1&shift&goto Arg_Loop)
-REM Keep around usenmakemakefiles for usage by the jit-format tool
-if /i "%1" == "usenmakemakefiles"   (set __Ninja=1&set __BuildNative=1&set processedArgs=!processedArgs! %1&shift&goto Arg_Loop)
 if /i "%1" == "pgoinstrument"       (set __PgoInstrument=1&set processedArgs=!processedArgs! %1&shift&goto Arg_Loop)
 if /i "%1" == "nopgooptimize"       (set __PgoOptimize=0&set processedArgs=!processedArgs! %1&shift&goto Arg_Loop)
 if /i "%1" == "enforcepgo"          (set __EnforcePgo=1&set processedArgs=!processedArgs! %1&shift&goto Arg_Loop)
@@ -272,6 +270,11 @@ if %__SkipCrossArchNative% EQU 0 (
 )
 
 REM Set the remaining variables based upon the determined build configuration
+
+REM PGO optimization is only applied to release builds (see pgosupport.cmake). Disable PGO by default if not building release.
+if NOT "%__BuildType%"=="Release" (
+    set __PgoOptimize=0
+)
 
 if %__PgoOptimize%==0 (
     set __RestoreOptData=0
@@ -592,7 +595,7 @@ if %__BuildNative% EQU 1 (
     echo %__MsgPrefix%Commencing build of native components for %__TargetOS%.%__BuildArch%.%__BuildType%
 
     REM Set the environment for the native build
-    set __VCBuildArch=x86_amd64
+    set __VCBuildArch=amd64
     if /i "%__BuildArch%" == "x86" ( set __VCBuildArch=x86 )
     if /i "%__BuildArch%" == "arm" (
         set __VCBuildArch=x86_arm
@@ -846,7 +849,7 @@ exit /b 1
 :NoDIA
 echo Error: DIA SDK is missing at "%VSINSTALLDIR%DIA SDK". ^
 Did you install all the requirements for building on Windows, including the "Desktop Development with C++" workload? ^
-Please see https://github.com/dotnet/runtime/blob/master/docs/workflow/requirements/windows-requirements.md ^
+Please see https://github.com/dotnet/runtime/blob/main/docs/workflow/requirements/windows-requirements.md ^
 Another possibility is that you have a parallel installation of Visual Studio and the DIA SDK is there. In this case it ^
 may help to copy its "DIA SDK" folder into "%VSINSTALLDIR%" manually, then try again.
 exit /b 1

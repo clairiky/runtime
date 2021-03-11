@@ -14,6 +14,8 @@
 #import <os/log.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 static char *bundle_path;
 
@@ -29,6 +31,11 @@ get_bundle_path (void)
         return bundle_path;
     NSBundle* main_bundle = [NSBundle mainBundle];
     NSString* path = [main_bundle bundlePath];
+
+#if TARGET_OS_MACCATALYST
+    path = [path stringByAppendingString:@"/Contents/Resources"];
+#endif
+
     bundle_path = strdup ([path UTF8String]);
 
     return bundle_path;
@@ -196,7 +203,24 @@ register_dllmap (void)
 //%DllMap%
 }
 
-#if FORCE_INTERPRETER || FORCE_AOT || !TARGET_OS_SIMULATOR
+int32_t GlobalizationNative_LoadICUData(char *path);
+
+static int32_t load_icu_data ()
+{
+    char path [1024];
+    int res;
+
+    const char *dname = "icudt.dat";
+    const char *bundle = get_bundle_path ();
+
+    os_log_info (OS_LOG_DEFAULT, "Loading ICU data file '%s'.", dname);
+    res = snprintf (path, sizeof (path) - 1, "%s/%s", bundle, dname);
+    assert (res > 0);
+
+    return GlobalizationNative_LoadICUData(path);
+}
+
+#if FORCE_INTERPRETER || FORCE_AOT || (!TARGET_OS_SIMULATOR && !TARGET_OS_MACCATALYST)
 void mono_jit_set_aot_mode (MonoAotMode mode);
 void register_aot_modules (void);
 #endif
@@ -204,12 +228,24 @@ void register_aot_modules (void);
 void
 mono_ios_runtime_init (void)
 {
-    // for now, only Invariant Mode is supported (FIXME: integrate ICU)
+#if INVARIANT_GLOBALIZATION
     setenv ("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", TRUE);
-    // uncomment for debug output:
-    //
-    // setenv ("MONO_LOG_LEVEL", "debug", TRUE);
-    // setenv ("MONO_LOG_MASK", "all", TRUE);
+#endif
+
+#if ENABLE_RUNTIME_LOGGING
+    setenv ("MONO_LOG_LEVEL", "debug", TRUE);
+    setenv ("MONO_LOG_MASK", "all", TRUE);
+#endif
+
+#if !INVARIANT_GLOBALIZATION
+    int32_t ret = load_icu_data ();
+
+    if (ret == 0) {
+        os_log_info (OS_LOG_DEFAULT, "ICU BAD EXIT %d.", ret);
+        exit (ret);
+        return;
+    }
+#endif
 
     id args_array = [[NSProcessInfo processInfo] arguments];
     assert ([args_array count] <= 128);
@@ -231,7 +267,7 @@ mono_ios_runtime_init (void)
 #if FORCE_INTERPRETER
     os_log_info (OS_LOG_DEFAULT, "INTERP Enabled");
     mono_jit_set_aot_mode (MONO_AOT_MODE_INTERP_ONLY);
-#elif !TARGET_OS_SIMULATOR || FORCE_AOT
+#elif (!TARGET_OS_SIMULATOR && !TARGET_OS_MACCATALYST) || FORCE_AOT
     register_dllmap ();
     // register modules
     register_aot_modules ();

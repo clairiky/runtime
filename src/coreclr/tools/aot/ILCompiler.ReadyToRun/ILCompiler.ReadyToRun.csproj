@@ -35,6 +35,7 @@
     <Compile Include="..\..\Common\Pgo\TypeSystemEntityOrUnknown.cs" Link="Common\Pgo\TypeSystemEntityOrUnknown.cs" />
     <Compile Include="..\..\Common\System\FormattingHelpers.cs" Link="Common\FormattingHelpers.cs" />
     <Compile Include="..\..\Common\TypeSystem\IL\ILProvider.cs" Link="IL\ILProvider.cs" />
+    <Compile Include="..\..\Common\TypeSystem\IL\ILReader.cs" Link="IL\ILReader.cs" />
     <Compile Include="..\..\Common\TypeSystem\IL\Stubs\ComparerIntrinsics.cs" Link="IL\Stubs\ComparerIntrinsics.cs" />
     <Compile Include="..\..\Common\TypeSystem\IL\Stubs\InterlockedIntrinsics.cs" Link="IL\Stubs\InterlockedIntrinsics.cs" />
     <Compile Include="..\..\Common\TypeSystem\IL\Stubs\MemoryMarshalIntrinsics.cs" Link="IL\Stubs\MemoryMarshalIntrinsics.cs" />
@@ -143,6 +144,7 @@
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\ImportSectionsTableNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\InliningInfoNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\InstanceEntryPointTableNode.cs" />
+    <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\InstrumentationDataTableNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\OwnerCompositeExecutableNode.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\PrecodeMethodImport.cs" />
     <Compile Include="Compiler\DependencyAnalysis\ReadyToRun\DelayLoadMethodImport.cs" />
@@ -188,6 +190,7 @@
     <Compile Include="IBC\MIbcProfileParser.cs" />
     <Compile Include="IBC\ReaderExtensions.cs" />
     <Compile Include="Compiler\ProfileData.cs" />
+    <Compile Include="Compiler\ProfileDataManager.cs" />
     <Compile Include="Compiler\ReadyToRunHashCode.cs" />
     <Compile Include="Compiler\ReadyToRunLibraryRootProvider.cs" />
     <Compile Include="Compiler\ReadyToRunCompilerContext.cs" />
@@ -203,6 +206,7 @@
     <Compile Include="Interop\IL\Marshaller.ReadyToRun.cs" />
     <Compile Include="Compiler\PerfEventSource.cs" />
     <Compile Include="ObjectWriter\OutputInfoBuilder.cs" />
+    <Compile Include="ObjectWriter\ProfileFileBuilder.cs" />
     <Compile Include="ObjectWriter\SymbolFileBuilder.cs" />
     <Compile Include="Win32Resources\ResourceData.cs" />
     <Compile Include="Win32Resources\ResourceData.Reader.cs" />

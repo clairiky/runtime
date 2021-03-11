@@ -355,6 +355,12 @@ namespace System.Tests
             yield return new object[] { "123123", NumberStyles.AllowLeadingSign, new NumberFormatInfo() { NegativeSign = "123" }, -123 };
             yield return new object[] { "123123", NumberStyles.AllowLeadingSign, new NumberFormatInfo() { PositiveSign = "12312" }, 3 };
             yield return new object[] { "123123", NumberStyles.AllowLeadingSign, new NumberFormatInfo() { NegativeSign = "12312" }, -3 };
+
+            // Test trailing zeros
+            yield return new object[] { "3.00", NumberStyles.Number, CultureInfo.InvariantCulture, 3 };
+            yield return new object[] { "3.00000000", NumberStyles.Number, CultureInfo.InvariantCulture, 3 };
+            yield return new object[] { "3.000000000", NumberStyles.Number, CultureInfo.InvariantCulture, 3 };
+            yield return new object[] { "3.0000000000", NumberStyles.Number, CultureInfo.InvariantCulture, 3 };
         }
 
         [Theory]
@@ -834,5 +840,37 @@ namespace System.Tests
                 Assert.Equal(expected.ToLowerInvariant(), new string(actual));
             }
         }
+
+        [Fact]
+        public static void TestNegativeNumberParsingWithHyphen()
+        {
+            // CLDR data for Swedish culture has negative sign U+2212. This test ensure parsing with the hyphen with such cultures will succeed.
+            CultureInfo ci = CultureInfo.GetCultureInfo("sv-SE");
+            Assert.Equal(-158, int.Parse("-158", NumberStyles.Integer, ci));
+        }
+
+        [Fact]
+        public static void TestParseLenientData()
+        {
+            NumberFormatInfo nfi = new CultureInfo("en-US").NumberFormat;
+
+            string [] negativeSigns = new string []
+            {
+                "\u2012", // Figure Dash
+                "\u207B", // Superscript Minus
+                "\u208B", // Subscript Minus
+                "\u2212", // Minus Sign
+                "\u2796", // Heavy Minus Sign
+                "\uFE63", // Small Hyphen-Minus
+            };
+
+            foreach (string negativeSign in negativeSigns)
+            {
+                nfi.NegativeSign = negativeSign;
+                Assert.Equal(negativeSign, nfi.NegativeSign);
+                Assert.Equal(-9670, int.Parse("-9670", NumberStyles.Integer, nfi));
+            }
+        }
+
     }
 }
